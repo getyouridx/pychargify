@@ -194,21 +194,14 @@ class ChargifyCustomer(ChargifyBase):
         super( ChargifyCustomer, self ).__init__(apikey, subdomain)
         
     def getAll(self):
-        return self._applyNew(self._get('/customers.xml'))
+        return self._applyA(self._get('/customers.xml', 'customer'))
     
     def getById(id):
-        self._apply(self._get('/customers/' + str(id) + '.xml'))
-        return self
+        return self._applyS(self._get('/customers/' + str(id) + '.xml', 'customer'))
     
     def getByHandle(handle):
-        self._apply(self._get('/customers/' + str(handle) + '.xml'))
+        return self._applyS(self._get('/customers/' + str(handle) + '.xml', 'customer'))
     
-    def parse(xml):
-        pass
-
-    def save(self):
-        pass
-
 
 class ChargifyProduct(ChargifyBase):
     """
