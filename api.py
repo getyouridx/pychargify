@@ -94,15 +94,23 @@ class ChargifyBase(object):
                 rc = rc + node.data
         return rc
     
-    def __get_object_from_node(self, node):
+    def __get_object_from_node(self, node, obj_type = ''):
         """
         Copy values from a node into a new Object
         """
-        constructor = globals()[self.__name__]
+        if obj_type == '':
+            constructor = globals()[self.__name__]
+        else:
+            constructor = globals()[obj_type]
         obj = constructor(self.api_key, self.sub_domain)
+        
         for childnodes in node.childNodes:
             if childnodes.nodeType == 1 and not childnodes.nodeName == '':
-                obj.__setattr__(childnodes.nodeName, self.__get_xml_value(childnodes.childNodes))
+                if childnodes.nodeName in self.__attribute_types__:
+                    obj.__setattr__(childnodes.nodeName, self._applyS(childnodes, self.__attribute_types__[childnodes.nodeName]))
+                else:
+                    obj.__setattr__(childnodes.nodeName, self.__get_xml_value(childnodes.childNodes))
+        
         return obj
     
     def _applyS(self, xml, node_name):
@@ -182,6 +190,7 @@ class ChargifyCustomer(ChargifyBase):
     @license    GNU General Public License
     """
     __name__ = 'ChargifyCustomer'
+    __attribute_types__ = {}
     
     id = None
     first_name = ''
@@ -204,6 +213,10 @@ class ChargifyCustomer(ChargifyBase):
     def getByHandle(handle):
         return self._applyS(self._get('/customers/' + str(handle) + '.xml', 'customer'))
     
+    def getSubscriptions(self):
+        obj = ChargifySubscription()
+        return obj.getByCustomerId(self.id)
+    
 
 class ChargifyProduct(ChargifyBase):
     """
@@ -211,6 +224,7 @@ class ChargifyProduct(ChargifyBase):
     @license    GNU General Public License
     """
     __name__ = 'ChargifyProduct'
+    __attribute_types__ = {}
     
     id = None
     prince_in_cents = 0
@@ -239,9 +253,59 @@ class ChargifySubscription(ChargifyBase):
     Represents Chargify Subscriptions
     @license    GNU General Public License
     """
-    def __init__(self, apikey):
+    __name__ = 'ChargifySubscription'
+    __attribute_types__ = {
+        'customer': 'ChargifyCustomer',
+        'product': 'ChargifyProduct',
+        'credit_card': 'ChargifyCreditCard'
+    }
+    
+    id = None
+    state = ''
+    balance_in_cents = 0
+    current_period_started_at = None
+    current_period_ends_at = None
+    trial_started_at = None
+    trial_ended_attrial_ended_at = None
+    activated_at = None
+    expires_at = None
+    created_at = None
+    updated_at = None
+    customer = None
+    product = None
+    credit_card = None
+    
+    def __init__(self, apikey, subdomain):
         ChargifyBase.__init__(apikey, subdomain)
+    
+    def getByCustomerId(self, customer_id):
+        return self._applyA(self._get('/customers/' + customer_id + '/subscriptions.xml'), 'subscription')
+    
+    def getBySubscriptionId(self, subscription_id):
+        return self._applyA(self._get('/subscriptions/' + subscription_id + '.xml'), 'subscription')
 
+
+class ChargifyCreditCard(ChargifyBase):
+    """
+    Represents Chargify Credit Cards
+    """
+    __name__ = 'ChargifyCreditCard'
+    __attribute_types__ = {}
+    
+    first_name = ''
+    last_name = ''
+    full_number = ''
+    masked_card_number = ''
+    expiration_month = ''
+    expiration_year = ''
+    cvv = ''
+    type = ''
+    billing_address = ''
+    billing_city = ''
+    billing_state = ''
+    billing_zip = ''
+    billing_country = ''
+    
 
 class ChargifyPostBack(ChargifyBase):
     """
