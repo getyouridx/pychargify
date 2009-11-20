@@ -181,6 +181,8 @@ class ChargifyCustomer(ChargifyBase):
     Represents Chargify Customers
     @license    GNU General Public License
     """
+    __name__ = 'ChargifyCustomer'
+    
     id = None
     first_name = ''
     last_name = ''
