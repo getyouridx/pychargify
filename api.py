@@ -336,7 +336,7 @@ class ChargifyProduct(ChargifyBase):
         return self._applyS(self._get('/products/handle/' + str(handle) + '.xml'), 'product')
     
     def getPaymentPageUrl(self):
-        return 'https://%s/h/%s/subscriptions/new' % (self.request_host, self.id)
+        return 'https://' + self.request_host + '/h/' + self.id + '/subscriptions/new'
     
     def save(self):
         self._save('products')
