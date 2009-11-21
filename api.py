@@ -72,10 +72,13 @@ class ChargifyBase(object):
     The ChargifyBase class provides a common base for all classes in this module
     @license    GNU General Public License
     """
+    __ignore__ = ['api_key', 'sub_domain', 'base_host', 'request_host', 'id', '__xmlnodename__']
+    
     api_key = ''
     sub_domain = ''
     base_host = '.chargify.com'
     request_host = ''
+    
     def __init__(self, apikey, subdomain):
         """
         Initialize the Class with the API Key and SubDomain for Requests to the Chargify API
@@ -133,6 +136,23 @@ class ChargifyBase(object):
             objs.append(self.__get_object_from_node(node))
         return objs
     
+    def _toxml(self, dom):
+        """
+        Return a XML Representation of the object
+        """
+        element = minidom.Element(self.__xmlnodename__)
+        for property, value in self.__dict__.iteritems():
+            if not property in self.__ignore__:
+                if property in self.__attribute_types__:
+                    element.appendChild(value._toxml(dom))
+                else:
+                    node = minidom.Element(property)
+                    print property
+                    node_txt = dom.createTextNode(str(value))
+                    node.appendChild(node_txt)
+                    element.appendChild(node)
+        return element
+    
     def _get(self, url):
         """
         Handle HTTP GET's to the API
@@ -158,29 +178,56 @@ class ChargifyBase(object):
         return self._request('DELETE', url, data)
     
     def _request(self, method, url, data = None  ):
+        """
+        Handled the request and sends it to the server
+        """
+        headers = {
+            "Authorization": "Basic %s" % self._get_auth_string(),
+            "User-Agent": "pyChargify",
+            "Content-Type": "text/xml"
+        }
+        
         r = httplib.HTTPSConnection(self.request_host)
-        headers = {"Authorization": "Basic %s" % self.get_auth_string(), "User-Agent": "pyChargify"}
         r.request(method, url, data, headers)
         response = r.getresponse()
         
-        if response.status == '200':
-            pass
-        elif response.status == '201':
-            pass
-        elif response.status == '401':
+        # Unauthorized Error
+        if response.status == 401:
             raise ChargifyUnAuthorized()
-        elif response.status == '403':
+        
+        # Forbidden Error
+        elif response.status == 403:
             raise ChargifyForbidden()
-        elif response.status == '404':
+        
+        # Not Found Error
+        elif response.status == 404:
             raise ChargifyNotFound()
-        elif response.status == '422':
+        
+        # Unprocessable Entity Error
+        elif response.status == 422:
             raise ChargifyUnProcessableEntity()
-        elif response.status == '500':
+        
+        # Generic Server Errors
+        elif response.status in [405, 500]:
             raise ChargifyServerError()
         
         return response.read()
     
-    def get_auth_string(self):
+    def _save(self, url):
+        """
+        Save the object using the passed URL as the API end point
+        """
+        dom = minidom.Document()
+        dom.appendChild(self._toxml(dom))
+        
+        print dom.toprettyxml()
+        
+        if self.id:
+            print self._post('/' + url + '/' + self.id + '.xml', dom.toxml())
+        else:
+            print self._put('/' + url + '.xml', dom.toxml())
+    
+    def _get_auth_string(self):
         return base64.encodestring('%s:%s' % (self.api_key, 'x'))[:-1]
 
 
@@ -191,6 +238,7 @@ class ChargifyCustomer(ChargifyBase):
     """
     __name__ = 'ChargifyCustomer'
     __attribute_types__ = {}
+    __xmlnodename__ = 'customer'
     
     id = None
     first_name = ''
@@ -201,8 +249,10 @@ class ChargifyCustomer(ChargifyBase):
     created_at = None
     modified_at = None
     
-    def __init__(self, apikey, subdomain):
+    def __init__(self, apikey, subdomain, nodename = ''):
         super( ChargifyCustomer, self ).__init__(apikey, subdomain)
+        if nodename:
+            self.__xmlnodename__ = nodename
         
     def getAll(self):
         return self._applyA(self._get('/customers.xml', 'customer'))
@@ -217,6 +267,9 @@ class ChargifyCustomer(ChargifyBase):
         obj = ChargifySubscription()
         return obj.getByCustomerId(self.id)
     
+    def save(self):
+        self._save('customers')
+    
 
 class ChargifyProduct(ChargifyBase):
     """
@@ -225,6 +278,7 @@ class ChargifyProduct(ChargifyBase):
     """
     __name__ = 'ChargifyProduct'
     __attribute_types__ = {}
+    __xmlnodename__ = 'product'
     
     id = None
     prince_in_cents = 0
@@ -235,8 +289,10 @@ class ChargifyProduct(ChargifyBase):
     interval_unit = ''
     interval = 0
     
-    def __init__(self, apikey, subdomain):
+    def __init__(self, apikey, subdomain, nodename = ''):
         super( ChargifyProduct, self ).__init__(apikey, subdomain)
+        if nodename:
+            self.__xmlnodename__ = nodename
 
     def getAll(self):
         return self._applyA(self._get('/products.xml'), 'product')
@@ -246,6 +302,9 @@ class ChargifyProduct(ChargifyBase):
     
     def getByHandle(self, handle):
         return self._applyS(self._get('/products/handle/' + str(handle) + '.xml'), 'product')
+
+    def save(self):
+        self._save('products')
 
 
 class ChargifySubscription(ChargifyBase):
@@ -257,8 +316,9 @@ class ChargifySubscription(ChargifyBase):
     __attribute_types__ = {
         'customer': 'ChargifyCustomer',
         'product': 'ChargifyProduct',
-        'credit_card': 'ChargifyCreditCard'
+        'full_number': 'ChargifyCreditCard'
     }
+    __xmlnodename__ = 'subscription'
     
     id = None
     state = ''
@@ -273,16 +333,22 @@ class ChargifySubscription(ChargifyBase):
     updated_at = None
     customer = None
     product = None
+    product_handle = ''
     credit_card = None
     
-    def __init__(self, apikey, subdomain):
-        ChargifyBase.__init__(apikey, subdomain)
+    def __init__(self, apikey, subdomain, nodename = ''):
+        super( ChargifySubscription, self ).__init__(apikey, subdomain)
+        if nodename:
+            self.__xmlnodename__ = nodename
     
     def getByCustomerId(self, customer_id):
         return self._applyA(self._get('/customers/' + customer_id + '/subscriptions.xml'), 'subscription')
     
     def getBySubscriptionId(self, subscription_id):
         return self._applyA(self._get('/subscriptions/' + subscription_id + '.xml'), 'subscription')
+
+    def save(self):
+        self._save('subscriptions')
 
 
 class ChargifyCreditCard(ChargifyBase):
@@ -291,6 +357,7 @@ class ChargifyCreditCard(ChargifyBase):
     """
     __name__ = 'ChargifyCreditCard'
     __attribute_types__ = {}
+    __xmlnodename__ = 'credit_card_attributes'
     
     first_name = ''
     last_name = ''
@@ -306,6 +373,11 @@ class ChargifyCreditCard(ChargifyBase):
     billing_zip = ''
     billing_country = ''
     
+    def __init__(self, apikey, subdomain, nodename = ''):
+        super( ChargifyCreditCard, self ).__init__(apikey, subdomain)
+        if nodename:
+            self.__xmlnodename__ = nodename
+
 
 class ChargifyPostBack(ChargifyBase):
     """
@@ -321,11 +393,22 @@ class Chargify:
     The Chargify class provides the main entry point to the Charify API
     @license    GNU General Public License
     """
-    apikey = ''
-    Customers = None
-    Products = None
-    def __init__(self, apikey, subdomain):
-        self.apikey = apikey
-        self.Customers = ChargifyCustomer(self.apikey, subdomain)
-        self.Products = ChargifyProduct(self.apikey, subdomain)
+    api_key = ''
+    sub_domain = ''
     
+    def __init__(self, apikey, subdomain):
+        self.api_key = apikey
+        self.sub_domain = subdomain
+    
+    def Customer(self, nodename = ''):
+        return ChargifyCustomer(self.api_key, self.sub_domain, nodename)
+    
+    def Product(self, nodename = ''):
+        return ChargifyProduct(self.api_key, self.sub_domain, nodename)
+
+    def Subscription(self, nodename = ''):
+        return ChargifySubscription(self.api_key, self.sub_domain, nodename)
+
+    def CreditCard(self, nodename = ''):
+        return ChargifyCreditCard(self.api_key, self.sub_domain, nodename)
+        
