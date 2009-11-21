@@ -20,7 +20,6 @@ Author: Paul Trippett (paul@getyouridx.com)
 
 import httplib
 import base64
-from print_r import print_r
 from xml.dom import minidom
 
 
@@ -147,7 +146,6 @@ class ChargifyBase(object):
                     element.appendChild(value._toxml(dom))
                 else:
                     node = minidom.Element(property)
-                    print property
                     node_txt = dom.createTextNode(str(value))
                     node.appendChild(node_txt)
                     element.appendChild(node)
@@ -157,8 +155,38 @@ class ChargifyBase(object):
         """
         Handle HTTP GET's to the API
         """
-        return self._request('GET', url)
-    
+        headers = {
+            "Authorization": "Basic %s" % self._get_auth_string(),
+            "User-Agent": "pyChargify",
+            "Content-Type": "text/xml"
+        }
+        
+        r = httplib.HTTPSConnection(self.request_host)
+        r.request('GET', url, None, headers)
+        response = r.getresponse()
+        
+        # Unauthorized Error
+        if response.status == 401:
+            raise ChargifyUnAuthorized()
+        
+        # Forbidden Error
+        elif response.status == 403:
+            raise ChargifyForbidden()
+        
+        # Not Found Error
+        elif response.status == 404:
+            raise ChargifyNotFound()
+        
+        # Unprocessable Entity Error
+        elif response.status == 422:
+            raise ChargifyUnProcessableEntity()
+        
+        # Generic Server Errors
+        elif response.status in [405, 500]:
+            raise ChargifyServerError()
+        
+        return response.read()
+        
     def _post(self, url, data):
         """
         Handle HTTP POST's to the API
@@ -177,19 +205,23 @@ class ChargifyBase(object):
         """
         return self._request('DELETE', url, data)
     
-    def _request(self, method, url, data = None  ):
+    def _request(self, method, url, data = '' ):
         """
         Handled the request and sends it to the server
         """
-        headers = {
-            "Authorization": "Basic %s" % self._get_auth_string(),
-            "User-Agent": "pyChargify",
-            "Content-Type": "text/xml"
-        }
+        http = httplib.HTTPSConnection(self.request_host)
         
-        r = httplib.HTTPSConnection(self.request_host)
-        r.request(method, url, data, headers)
-        response = r.getresponse()
+        http.putrequest(method, url)
+        http.putheader("Authorization", "Basic %s" % self._get_auth_string())
+        http.putheader("User-Agent", "pychargify")
+        http.putheader("Host", "getyouridx-test.chargify.com")
+        http.putheader("Accept", "application/xml")
+        http.putheader("Content-Length", str(len(data)))
+        http.putheader("Content-Type", 'text/xml; charset="UTF-8"')
+        http.endheaders()
+
+        http.send(data)
+        response = http.getresponse()
         
         # Unauthorized Error
         if response.status == 401:
@@ -220,12 +252,12 @@ class ChargifyBase(object):
         dom = minidom.Document()
         dom.appendChild(self._toxml(dom))
         
-        print dom.toprettyxml()
+        print dom.toprettyxml(encoding="utf-8")
         
         if self.id:
-            print self._post('/' + url + '/' + self.id + '.xml', dom.toxml())
+            print self._put('/' + url + '/' + self.id + '.xml', dom.toxml(encoding="utf-8"))
         else:
-            print self._put('/' + url + '.xml', dom.toxml())
+            print self._post('/' + url + '.xml', dom.toxml(encoding="utf-8"))
     
     def _get_auth_string(self):
         return base64.encodestring('%s:%s' % (self.api_key, 'x'))[:-1]
