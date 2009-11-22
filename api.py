@@ -245,7 +245,7 @@ class ChargifyBase(object):
         
         return response.read()
     
-    def _save(self, url):
+    def _save(self, url, node_name):
         """
         Save the object using the passed URL as the API end point
         """
@@ -255,9 +255,9 @@ class ChargifyBase(object):
         print dom.toprettyxml(encoding="utf-8")
         
         if self.id:
-            print self._put('/' + url + '/' + self.id + '.xml', dom.toxml(encoding="utf-8"))
+            return self._applyS(self._put('/' + url + '/' + self.id + '.xml', dom.toxml(encoding="utf-8")), node_name)
         else:
-            print self._post('/' + url + '.xml', dom.toxml(encoding="utf-8"))
+            return self._applyS(self._post('/' + url + '.xml', dom.toxml(encoding="utf-8")), node_name)
     
     def _get_auth_string(self):
         return base64.encodestring('%s:%s' % (self.api_key, 'x'))[:-1]
@@ -300,7 +300,7 @@ class ChargifyCustomer(ChargifyBase):
         return obj.getByCustomerId(self.id)
     
     def save(self):
-        self._save('customers')
+        self._save('customers', 'customer')
     
 
 class ChargifyProduct(ChargifyBase):
@@ -339,7 +339,7 @@ class ChargifyProduct(ChargifyBase):
         return 'https://' + self.request_host + '/h/' + self.id + '/subscriptions/new'
     
     def save(self):
-        self._save('products')
+        self._save('products', 'product')
 
 
 class ChargifySubscription(ChargifyBase):
@@ -383,7 +383,7 @@ class ChargifySubscription(ChargifyBase):
         return self._applyA(self._get('/subscriptions/' + subscription_id + '.xml'), 'subscription')
 
     def save(self):
-        self._save('subscriptions')
+        self._save('subscriptions', 'subscription')
 
 
 class ChargifyCreditCard(ChargifyBase):
