@@ -214,7 +214,7 @@ class ChargifyBase(object):
         http.putrequest(method, url)
         http.putheader("Authorization", "Basic %s" % self._get_auth_string())
         http.putheader("User-Agent", "pychargify")
-        http.putheader("Host", "getyouridx-test.chargify.com")
+        http.putheader("Host", self.request_host)
         http.putheader("Accept", "application/xml")
         http.putheader("Content-Length", str(len(data)))
         http.putheader("Content-Type", 'text/xml; charset="UTF-8"')
