@@ -275,15 +275,16 @@ class ChargifyBase(object):
             if obj:
                 if type(obj.updated_at) == datetime.datetime:
                     if (obj.updated_at.day == request_made['day']) and (obj.updated_at.month == request_made['month']) and (obj.updated_at.year == request_made['year']):
-                        return True
-            return False
+                        self.saved = True
+                        return (True, obj)
+            return (False, obj)
         else:
             obj = self._applyS(self._post('/' + url + '.xml', dom.toxml(encoding="utf-8")), self.__name__, node_name)
             if obj:
                 if type(obj.updated_at) == datetime.datetime:
                     if (obj.updated_at.day == request_made['day']) and (obj.updated_at.month == request_made['month']) and (obj.updated_at.year == request_made['year']):
-                        return True
-            return False
+                        return (True, obj)
+            return (False, obj)
     
     def _get_auth_string(self):
         return base64.encodestring('%s:%s' % (self.api_key, 'x'))[:-1]
@@ -339,7 +340,7 @@ class ChargifyProduct(ChargifyBase):
     __xmlnodename__ = 'product'
     
     id = None
-    prince_in_cents = 0
+    price_in_cents = 0
     name = ''
     handle = ''
     product_family = {}
@@ -366,6 +367,9 @@ class ChargifyProduct(ChargifyBase):
     
     def save(self):
         return self._save('products', 'product')
+    
+    def getPriceInDollars(self):
+        return round(float(self.price_in_cents) / 100, 2)
 
 
 class ChargifySubscription(ChargifyBase):
