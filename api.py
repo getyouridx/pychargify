@@ -20,6 +20,10 @@ Author: Paul Trippett (paul@getyouridx.com)
 
 import httplib
 import base64
+import time
+import datetime
+
+import iso8601
 from xml.dom import minidom
 
 
@@ -111,7 +115,13 @@ class ChargifyBase(object):
                 if childnodes.nodeName in self.__attribute_types__:
                     obj.__setattr__(childnodes.nodeName, self._applyS(childnodes.toxml(), self.__attribute_types__[childnodes.nodeName], childnodes.nodeName))
                 else:
-                    obj.__setattr__(childnodes.nodeName, self.__get_xml_value(childnodes.childNodes))
+                    node_value = self.__get_xml_value(childnodes.childNodes)
+                    if "type" in  childnodes.attributes.keys():
+                        node_type = childnodes.attributes["type"]
+                        if node_value:
+                            if node_type.nodeValue == 'datetime':
+                                node_value = datetime.datetime.fromtimestamp(iso8601.parse(node_value))
+                    obj.__setattr__(childnodes.nodeName, node_value)
         
         return obj
     
