@@ -71,5 +71,9 @@ subscription.product_handle = 'fhaar-mini'
 subscription.customer = customer
 subscription.credit_card = creditcard
 
-subscription.save()
+if subscription.save():
+    print "Subscription Created Successfully"
+else:
+    print "Subscription Creation Failed"
+    
 

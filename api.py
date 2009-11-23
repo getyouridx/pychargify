@@ -264,10 +264,26 @@ class ChargifyBase(object):
         
         print dom.toprettyxml(encoding="utf-8")
         
+        request_made = {
+            'day': datetime.datetime.today().day,
+            'month': datetime.datetime.today().month,
+            'year': datetime.datetime.today().year
+        }
+        
         if self.id:
-            return self._applyS(self._put('/' + url + '/' + self.id + '.xml', dom.toxml(encoding="utf-8")), self.__name__, node_name)
+            obj = self._applyS(self._put('/' + url + '/' + self.id + '.xml', dom.toxml(encoding="utf-8")), self.__name__, node_name)
+            if obj:
+                if type(obj.updated_at) == datetime.datetime:
+                    if (obj.updated_at.day == request_made['day']) and (obj.updated_at.month == request_made['month']) and (obj.updated_at.year == request_made['year']):
+                        return True
+            return False
         else:
-            return self._applyS(self._post('/' + url + '.xml', dom.toxml(encoding="utf-8")), self.__name__, node_name)
+            obj = self._applyS(self._post('/' + url + '.xml', dom.toxml(encoding="utf-8")), self.__name__, node_name)
+            if obj:
+                if type(obj.updated_at) == datetime.datetime:
+                    if (obj.updated_at.day == request_made['day']) and (obj.updated_at.month == request_made['month']) and (obj.updated_at.year == request_made['year']):
+                        return True
+            return False
     
     def _get_auth_string(self):
         return base64.encodestring('%s:%s' % (self.api_key, 'x'))[:-1]
@@ -310,7 +326,7 @@ class ChargifyCustomer(ChargifyBase):
         return obj.getByCustomerId(self.id)
     
     def save(self):
-        self._save('customers', 'customer')
+        return self._save('customers', 'customer')
     
 
 class ChargifyProduct(ChargifyBase):
@@ -349,7 +365,7 @@ class ChargifyProduct(ChargifyBase):
         return 'https://' + self.request_host + '/h/' + self.id + '/subscriptions/new'
     
     def save(self):
-        self._save('products', 'product')
+        return self._save('products', 'product')
 
 
 class ChargifySubscription(ChargifyBase):
@@ -393,7 +409,7 @@ class ChargifySubscription(ChargifyBase):
         return self._applyA(self._get('/subscriptions/' + subscription_id + '.xml'), self.__name__, 'subscription')
 
     def save(self):
-        self._save('subscriptions', 'subscription')
+        return self._save('subscriptions', 'subscription')
 
 
 class ChargifyCreditCard(ChargifyBase):
