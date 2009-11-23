@@ -109,22 +109,22 @@ class ChargifyBase(object):
         for childnodes in node.childNodes:
             if childnodes.nodeType == 1 and not childnodes.nodeName == '':
                 if childnodes.nodeName in self.__attribute_types__:
-                    obj.__setattr__(childnodes.nodeName, self._applyS(childnodes, self.__attribute_types__[childnodes.nodeName]))
+                    obj.__setattr__(childnodes.nodeName, self._applyS(childnodes.toxml(), self.__attribute_types__[childnodes.nodeName], childnodes.nodeName))
                 else:
                     obj.__setattr__(childnodes.nodeName, self.__get_xml_value(childnodes.childNodes))
         
         return obj
     
-    def _applyS(self, xml, node_name):
+    def _applyS(self, xml, obj_type, node_name):
         """
         Apply the values of the passed xml data to the a class
         """
         dom = minidom.parseString(xml)
         nodes = dom.getElementsByTagName(node_name)
         if nodes.length == 1:
-            return self.__get_object_from_node(nodes[0])
+            return self.__get_object_from_node(nodes[0], obj_type)
         
-    def _applyA(self, xml, node_name):
+    def _applyA(self, xml, obj_type, node_name):
         """
         Apply the values of the passed data to a new class of the current type
         """
@@ -132,7 +132,7 @@ class ChargifyBase(object):
         nodes = dom.getElementsByTagName(node_name)
         objs = []
         for node in nodes:
-            objs.append(self.__get_object_from_node(node))
+            objs.append(self.__get_object_from_node(node, obj_type))
         return objs
     
     def _toxml(self, dom):
@@ -255,9 +255,9 @@ class ChargifyBase(object):
         print dom.toprettyxml(encoding="utf-8")
         
         if self.id:
-            return self._applyS(self._put('/' + url + '/' + self.id + '.xml', dom.toxml(encoding="utf-8")), node_name)
+            return self._applyS(self._put('/' + url + '/' + self.id + '.xml', dom.toxml(encoding="utf-8")), self.__name__, node_name)
         else:
-            return self._applyS(self._post('/' + url + '.xml', dom.toxml(encoding="utf-8")), node_name)
+            return self._applyS(self._post('/' + url + '.xml', dom.toxml(encoding="utf-8")), self.__name__, node_name)
     
     def _get_auth_string(self):
         return base64.encodestring('%s:%s' % (self.api_key, 'x'))[:-1]
@@ -287,13 +287,13 @@ class ChargifyCustomer(ChargifyBase):
             self.__xmlnodename__ = nodename
         
     def getAll(self):
-        return self._applyA(self._get('/customers.xml', 'customer'))
+        return self._applyA(self._get('/customers.xml', self.__name__, 'customer'))
     
     def getById(id):
-        return self._applyS(self._get('/customers/' + str(id) + '.xml', 'customer'))
+        return self._applyS(self._get('/customers/' + str(id) + '.xml', self.__name__, 'customer'))
     
     def getByHandle(handle):
-        return self._applyS(self._get('/customers/' + str(handle) + '.xml', 'customer'))
+        return self._applyS(self._get('/customers/' + str(handle) + '.xml', self.__name__, 'customer'))
     
     def getSubscriptions(self):
         obj = ChargifySubscription()
@@ -327,13 +327,13 @@ class ChargifyProduct(ChargifyBase):
             self.__xmlnodename__ = nodename
 
     def getAll(self):
-        return self._applyA(self._get('/products.xml'), 'product')
+        return self._applyA(self._get('/products.xml'), self.__name__, 'product')
     
     def getById(self, id):
-        return self._applyS(self._get('/products/' + str(id) + '.xml'), 'product')
+        return self._applyS(self._get('/products/' + str(id) + '.xml'), self.__name__, 'product')
     
     def getByHandle(self, handle):
-        return self._applyS(self._get('/products/handle/' + str(handle) + '.xml'), 'product')
+        return self._applyS(self._get('/products/handle/' + str(handle) + '.xml'), self.__name__, 'product')
     
     def getPaymentPageUrl(self):
         return 'https://' + self.request_host + '/h/' + self.id + '/subscriptions/new'
@@ -351,7 +351,7 @@ class ChargifySubscription(ChargifyBase):
     __attribute_types__ = {
         'customer': 'ChargifyCustomer',
         'product': 'ChargifyProduct',
-        'full_number': 'ChargifyCreditCard'
+        'credit_card': 'ChargifyCreditCard'
     }
     __xmlnodename__ = 'subscription'
     
@@ -377,10 +377,10 @@ class ChargifySubscription(ChargifyBase):
             self.__xmlnodename__ = nodename
     
     def getByCustomerId(self, customer_id):
-        return self._applyA(self._get('/customers/' + customer_id + '/subscriptions.xml'), 'subscription')
+        return self._applyA(self._get('/customers/' + customer_id + '/subscriptions.xml'), self.__name__, 'subscription')
     
     def getBySubscriptionId(self, subscription_id):
-        return self._applyA(self._get('/subscriptions/' + subscription_id + '.xml'), 'subscription')
+        return self._applyA(self._get('/subscriptions/' + subscription_id + '.xml'), self.__name__, 'subscription')
 
     def save(self):
         self._save('subscriptions', 'subscription')
