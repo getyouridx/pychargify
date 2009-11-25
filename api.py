@@ -332,7 +332,7 @@ class ChargifyCustomer(ChargifyBase):
         return self._applyS(self._get('/customers/' + str(handle) + '.xml', self.__name__, 'customer'))
     
     def getSubscriptions(self):
-        obj = ChargifySubscription()
+        obj = ChargifySubscription(self.api_key, self.sub_domain)
         return obj.getByCustomerId(self.id)
     
     def save(self):
@@ -371,11 +371,11 @@ class ChargifyProduct(ChargifyBase):
     def getByHandle(self, handle):
         return self._applyS(self._get('/products/handle/' + str(handle) + '.xml'), self.__name__, 'product')
     
-    def getPaymentPageUrl(self):
-        return 'https://' + self.request_host + '/h/' + self.id + '/subscriptions/new'
-    
     def save(self):
         return self._save('products', 'product')
+    
+    def getPaymentPageUrl(self):
+        return 'https://' + self.request_host + '/h/' + self.id + '/subscriptions/new'
     
     def getPriceInDollars(self):
         return round(float(self.price_in_cents) / 100, 2)
