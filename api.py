@@ -22,8 +22,17 @@ import httplib
 import base64
 import time
 import datetime
-
 import iso8601
+
+try:
+    import json
+except Exception, e:
+    try:
+        import simplejson as json
+    except Exception, e:
+        print "No Json library found... Exiting."
+        exit()
+
 from xml.dom import minidom
 
 
@@ -449,8 +458,21 @@ class ChargifyPostBack(ChargifyBase):
     Represents Chargify API Post Backs
     @license    GNU General Public License
     """
-    def __init__(self, apikey):
+    subscriptions = []
+    
+    def __init__(self, apikey, subdomain, postback_data):
         ChargifyBase.__init__(apikey, subdomain)
+        if postback_data:
+            self._process_postback_data(postback_data)
+    
+    def _process_postback_data(self, data):
+        """
+        Process the Json array and fetches the Subscription Objects
+        """
+        csub = ChargifySubscription(self.api_key, self.sub_domain)
+        postdata_objects = json.loads(data)
+        for obj in postdata_objects:
+            self.subscriptions.append(csub.getBySubscriptionId(obj))
 
 
 class Chargify:
@@ -476,4 +498,6 @@ class Chargify:
 
     def CreditCard(self, nodename = ''):
         return ChargifyCreditCard(self.api_key, self.sub_domain, nodename)
-        
+    
+    def PostBack(self, postbackdata):
+        return ChargifyPostBack(self.api_key, self.sub_domain)
