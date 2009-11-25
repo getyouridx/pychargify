@@ -271,8 +271,6 @@ class ChargifyBase(object):
         dom = minidom.Document()
         dom.appendChild(self._toxml(dom))
         
-        print dom.toprettyxml(encoding="utf-8")
-        
         request_made = {
             'day': datetime.datetime.today().day,
             'month': datetime.datetime.today().month,
