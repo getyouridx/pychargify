@@ -321,7 +321,7 @@ class ChargifyCustomer(ChargifyBase):
             self.__xmlnodename__ = nodename
         
     def getAll(self):
-        return self._applyA(self._get('/customers.xml', self.__name__, 'customer'))
+        return self._applyA(self._get('/customers.xml'), self.__name__, 'customer')
     
     def getById(id):
         return self._applyS(self._get('/customers/' + str(id) + '.xml', self.__name__, 'customer'))
