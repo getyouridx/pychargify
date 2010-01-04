@@ -324,10 +324,10 @@ class ChargifyCustomer(ChargifyBase):
         return self._applyA(self._get('/customers.xml'), self.__name__, 'customer')
     
     def getById(id):
-        return self._applyS(self._get('/customers/' + str(id) + '.xml', self.__name__, 'customer'))
+        return self._applyS(self._get('/customers/' + str(id) + '.xml'), self.__name__, 'customer')
     
     def getByHandle(handle):
-        return self._applyS(self._get('/customers/' + str(handle) + '.xml', self.__name__, 'customer'))
+        return self._applyS(self._get('/customers/' + str(handle) + '.xml'), self.__name__, 'customer')
     
     def getSubscriptions(self):
         obj = ChargifySubscription(self.api_key, self.sub_domain)
