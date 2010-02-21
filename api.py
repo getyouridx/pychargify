@@ -15,7 +15,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 Created on Nov 20, 2009
-Author: Paul Trippett (paul@getyouridx.com)
+Author: Paul Trippett (paul@pyhub.com)
 '''
 
 import httplib
