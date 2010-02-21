@@ -57,4 +57,6 @@ ChargifiyCreditCard
 Chargify is a helper class that makes initialization easier of the ChargifyProduct, ChargifyCustomer, ChargifiySubscription and ChargifiyCreditCard classes
 
 Contributors
-Paul Trippett (GetYourIDX)
+  Paul Trippett (pyhub)  - Base Development
+  mrtron - Several Updates and bug fixes to pychargify library
+
