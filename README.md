@@ -71,4 +71,5 @@ Now you'll have access to classes the interact with the Chargify API, such as:
 
 ### Contributors
 
-* Paul Trippett (GetYourIDX)
+* Paul Trippett (pyhub)  - Base Development
+* mrtron - Several Updates and bug fixes to pychargify library
