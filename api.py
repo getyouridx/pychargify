@@ -30,12 +30,12 @@ except Exception, e:
     try:
         import simplejson as json
     except Exception, e:
-            try:
-                # For AppEngine users
-                import django.utils.simplejson as json
-            except Exception, e:
-                print "No Json library found... Exiting."
-                exit()
+        try:
+            # For AppEngine users
+            import django.utils.simplejson as json
+        except Exception, e:
+            print "No Json library found... Exiting."
+            exit()
 
 from xml.dom import minidom
 
