@@ -443,6 +443,16 @@ class ChargifySubscription(ChargifyBase):
         #end improper indentation
         
         return self._applyS(self._put("/subscriptions/"+self.id+".xml", xml), self.__name__, "subscription")
+    
+    def unsubscribe(self, message):
+        xml = """<?xml version="1.0" encoding="UTF-8"?>
+<subscription>
+  <cancellation_message>
+    User manually cancelled subscription.
+  </cancellation_message>
+</subscription>"""
+        
+        self._delete("/subscriptions/"+self.id+".xml", xml)
 
 
 class ChargifyCreditCard(ChargifyBase):
