@@ -448,9 +448,9 @@ class ChargifySubscription(ChargifyBase):
         xml = """<?xml version="1.0" encoding="UTF-8"?>
 <subscription>
   <cancellation_message>
-    User manually cancelled subscription.
+    %s
   </cancellation_message>
-</subscription>"""
+</subscription>""" % (message)
         
         self._delete("/subscriptions/"+self.id+".xml", xml)
 
