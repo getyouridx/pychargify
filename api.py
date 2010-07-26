@@ -381,6 +381,9 @@ class ChargifyProduct(ChargifyBase):
     
     def getPriceInDollars(self):
         return round(float(self.price_in_cents) / 100, 2)
+    
+    def getFormattedPrice(self):
+        return "$%.2f" % (self.getPriceInDollars())
 
 
 class ChargifySubscription(ChargifyBase):
