@@ -425,6 +425,21 @@ class ChargifySubscription(ChargifyBase):
 
     def save(self):
         return self._save('subscriptions', 'subscription')
+    
+    def resetBalance(self):
+        self._put("/subscriptions/"+self.id+"/reset_balance.xml", "")
+    
+    def reactivate(self):
+        self._put("/subscriptions/"+self.id+"/reactivate.xml", "")
+
+    def upgrade(self, toProductHandle):
+        xml = """<?xml version="1.0" encoding="UTF-8"?>
+  <subscription>
+    <product_handle>%s</product_handle>
+  </subscription>""" % (toProductHandle)
+        #end improper indentation
+        
+        return self._applyS(self._put("/subscriptions/"+self.id+".xml", xml), self.__name__, "subscription")
 
 
 class ChargifyCreditCard(ChargifyBase):
