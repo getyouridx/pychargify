@@ -454,6 +454,25 @@ class ChargifyCreditCard(ChargifyBase):
         if nodename:
             self.__xmlnodename__ = nodename
 
+    def save(self, subscription):
+        path = "/subscriptions/%s.xml" % (subscription.id)
+        
+        data = u"""<?xml version="1.0" encoding="UTF-8"?>
+  <subscription>
+    <credit_card_attributes>
+      <full_number>%s</full_number>
+      <expiration_month>%s</expiration_month>
+      <expiration_year>%s</expiration_year>
+      <cvv>%s</cvv>
+      <first_name>%s</first_name>
+      <last_name>%s</last_name>
+      <zip>%s</zip>
+    </credit_card_attributes>
+  </subscription>""" % (self.full_number, self.expiration_month, self.expiration_year, self.cvv, self.first_name, self.last_name, self.zip)
+        # end improper indentation
+        
+        return self._applyS(self._put(path, data), self.__name__, "subscription")
+
 
 class ChargifyPostBack(ChargifyBase):
     """
