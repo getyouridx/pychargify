@@ -30,8 +30,12 @@ except Exception, e:
     try:
         import simplejson as json
     except Exception, e:
-        print "No Json library found... Exiting."
-        exit()
+        try:
+            # For AppEngine users
+            import django.utils.simplejson as json
+        except Exception, e:
+            print "No Json library found... Exiting."
+            exit()
 
 from xml.dom import minidom
 
@@ -377,6 +381,9 @@ class ChargifyProduct(ChargifyBase):
     
     def getPriceInDollars(self):
         return round(float(self.price_in_cents) / 100, 2)
+    
+    def getFormattedPrice(self):
+        return "$%.2f" % (self.getPriceInDollars())
 
 
 class ChargifySubscription(ChargifyBase):
@@ -421,6 +428,31 @@ class ChargifySubscription(ChargifyBase):
 
     def save(self):
         return self._save('subscriptions', 'subscription')
+    
+    def resetBalance(self):
+        self._put("/subscriptions/"+self.id+"/reset_balance.xml", "")
+    
+    def reactivate(self):
+        self._put("/subscriptions/"+self.id+"/reactivate.xml", "")
+
+    def upgrade(self, toProductHandle):
+        xml = """<?xml version="1.0" encoding="UTF-8"?>
+  <subscription>
+    <product_handle>%s</product_handle>
+  </subscription>""" % (toProductHandle)
+        #end improper indentation
+        
+        return self._applyS(self._put("/subscriptions/"+self.id+".xml", xml), self.__name__, "subscription")
+    
+    def unsubscribe(self, message):
+        xml = """<?xml version="1.0" encoding="UTF-8"?>
+<subscription>
+  <cancellation_message>
+    %s
+  </cancellation_message>
+</subscription>""" % (message)
+        
+        self._delete("/subscriptions/"+self.id+".xml", xml)
 
 
 class ChargifyCreditCard(ChargifyBase):
@@ -449,6 +481,25 @@ class ChargifyCreditCard(ChargifyBase):
         super( ChargifyCreditCard, self ).__init__(apikey, subdomain)
         if nodename:
             self.__xmlnodename__ = nodename
+
+    def save(self, subscription):
+        path = "/subscriptions/%s.xml" % (subscription.id)
+        
+        data = u"""<?xml version="1.0" encoding="UTF-8"?>
+  <subscription>
+    <credit_card_attributes>
+      <full_number>%s</full_number>
+      <expiration_month>%s</expiration_month>
+      <expiration_year>%s</expiration_year>
+      <cvv>%s</cvv>
+      <first_name>%s</first_name>
+      <last_name>%s</last_name>
+      <zip>%s</zip>
+    </credit_card_attributes>
+  </subscription>""" % (self.full_number, self.expiration_month, self.expiration_year, self.cvv, self.first_name, self.last_name, self.zip)
+        # end improper indentation
+        
+        return self._applyS(self._put(path, data), self.__name__, "subscription")
 
 
 class ChargifyPostBack(ChargifyBase):
