@@ -498,4 +498,4 @@ class Chargify:
         return ChargifyCreditCard(self.api_key, self.sub_domain, nodename)
     
     def PostBack(self, postbackdata):
-        return ChargifyPostBack(self.api_key, self.sub_domain)
+        return ChargifyPostBack(self.api_key, self.sub_domain, postbackdata)
