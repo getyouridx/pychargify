@@ -1,2 +1,3 @@
 *.kpf
-*.pyc
+*.py[co]
+*.swp
