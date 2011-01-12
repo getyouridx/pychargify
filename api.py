@@ -157,6 +157,7 @@ class ChargifyBase(object):
         """
         Chargify encodes non-ascii characters in CP1252.
         Decodes and re-encodes with xml characters.
+        Strips out whitespace "text nodes".
         """
         return unicode(''.join([i.strip() for i in xml.split('\n')])).encode(
             'CP1252', 'replace').decode('utf-8', 'ignore').encode(
