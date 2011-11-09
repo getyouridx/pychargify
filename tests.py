@@ -3,6 +3,8 @@
     Edit my chargify = line with API key, then run me.
 '''
 
+import sys
+
 import api
 
 
@@ -27,10 +29,10 @@ Interval:        ''' + item.interval + '''
     print product_info
 
 
-def run_test():
+def run_test(credentials):
     ''' Init the API, and run some sample queries. '''
 # Initialize the API with the API Key and the sub domain
-    chargify = api.Chargify('YOUR-API-KEY', 'YOUR-SUB-DOMAIN')
+    chargify = api.Chargify(cred_file=credentials)
 
 # Get All Products
     print "Get All Products: \n"
@@ -74,4 +76,9 @@ def run_test():
         print "Subscription Creation Failed"
 
 if __name__ == "__main__":
-    run_test()
+    if len(sys.argv) > 1:
+        credentials = sys.argv[1]
+    else:
+        credentials = "credentials.json"
+
+    run_test(credentials)

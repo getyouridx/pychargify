@@ -21,7 +21,6 @@ Author: Paul Trippett (paul@pyhub.com)
 
 import httplib
 import base64
-import time
 import datetime
 import iso8601
 from itertools import chain
@@ -604,15 +603,30 @@ class ChargifyPostBack(ChargifyBase):
 
 class Chargify:
     """
-    The Chargify class provides the main entry point to the Charify API
+    The Chargify class provides the main entry point to the Chargify API
     @license    GNU General Public License
     """
     api_key = ''
     sub_domain = ''
 
-    def __init__(self, apikey, subdomain):
-        self.api_key = apikey
-        self.sub_domain = subdomain
+    def __init__(self, apikey=None, subdomain=None, cred_file=None):
+        ''' We take either an api_key and sub_domain, or a path
+        to a file with JSON that defines those two, or we throw
+        an error.'''
+
+        if self.api_key and self.sub_domain:
+            self.api_key = apikey
+            self.sub_domain = subdomain
+            return
+        elif cred_file:
+            f = open(cred_file)
+            credentials = json.loads(f.read())
+            self.api_key = credentials['api_key']
+            self.sub_domain = credentials['sub_domain']
+            return
+        else:
+            print "Need either an api_key and subdomain, or credential file. Exiting."
+            exit()
 
     def Customer(self, nodename=''):
         return ChargifyCustomer(self.api_key, self.sub_domain, nodename)
