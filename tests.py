@@ -15,7 +15,7 @@ def print_spacer(repeat=70):
 
 def print_product(item):
     ''' Print out a little formatted product info item. '''
-    product_info = ''' #########################################
+    product_info = '''#########################################
  ''' + item.name + ''' Product
 #########################################
 Id:              ''' + item.id + '''
