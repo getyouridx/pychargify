@@ -105,6 +105,7 @@ class ChargifyBase(object):
     sub_domain = ''
     base_host = '.chargify.com'
     request_host = ''
+    id = None
 
     def __init__(self, apikey, subdomain):
         """
@@ -549,6 +550,7 @@ class ChargifyCreditCard(ChargifyBase):
     billing_state = ''
     billing_zip = ''
     billing_country = ''
+    zip = ''
 
     def __init__(self, apikey, subdomain, nodename=''):
         super(ChargifyCreditCard, self).__init__(apikey, subdomain)
