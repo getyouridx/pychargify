@@ -1,6 +1,8 @@
 Chargify API wrapper for Python
 ===============================
 
+__Please Note: This library is no longer maintained__
+
 pychargify
 ----------
 
